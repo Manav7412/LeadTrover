@@ -1,0 +1,48 @@
+# LeadTrove
+
+A lightweight CRM for small sales teams (2–10 people) who currently track leads in Google Sheets. Think of a simple GoHighLevel / Pipedrive. **One idea: every lead has an owner and a next step, so no follow-up is missed.**
+
+This is a **portfolio demo**. **FAKE DATA ONLY** — never add real people, companies, emails or phone numbers. Use `.example` domains and `555` phone numbers.
+
+The owner of this project (Manav) is **not a developer**: explain steps in plain English and give exact things to click or run.
+
+## Stack
+- Next.js (App Router) + TypeScript + Tailwind CSS v4 (`src/` folder, alias `@/*`)
+- Supabase (Postgres + Auth), using `@supabase/supabase-js` and `@supabase/ssr`
+- Hosted on Vercel later
+- Keep code simple and well organised. Avoid new libraries unless clearly needed.
+- This Next.js version has breaking changes (e.g. `middleware` is now `src/proxy.ts`, `searchParams` is a Promise). Read `node_modules/next/dist/docs/` before using an API you are unsure about. See `AGENTS.md`.
+- Node is installed at `~/.local/node` (not on the default PATH in every shell): `export PATH="$HOME/.local/node/bin:$PATH"`
+
+## Secrets
+Keys live in `.env.local` only (git-ignored). Never commit it or print keys. `.env.example` lists the variable names. The service-role (secret) key is used by `scripts/seed.mjs` and by ONE server-only file, `src/lib/supabase/admin.ts` (imports `server-only`), for Settings > Team (creating/removing logins) and a user's own name change. Only call `adminClient()` after checking the person is an Owner (or acting on their own row). Never use it in client components or for general data access.
+
+## Modules (built one at a time, user confirms before the next)
+1. Login and users — roles **Owner** (sees everything) and **Rep** (sees only own leads/deals). ✅ done: login + role enforcement via row-level security; **Settings** at `/settings` (Profile: name, job title, phone, password + a read-out of your access; **Roles & permissions** `/settings/roles`: editable roles (Owner locked; Rep, Manager, Viewer built in or custom) with on/off permissions (keys in `src/lib/permissions.ts`) and a data scope (`own` / `all`); **Sharing rules** `/settings/sharing`: `sharing_rules` table lets person A see/edit person B's records. Enforced in the database by RLS helpers `has_perm()`, `sees_all()`, `shared_with_me()` (`supabase/permissions.sql`, run LAST) and mirrored in the app with `can()` / `seesAll()` from `src/lib/permissions.ts` + `requireProfile()` which loads `profile.permissions` and `profile.scope`. Always check `can(profile, key)` in new server actions; Team (needs `team.manage`): add a login with starting password + role, change role, remove (their contacts/deals/tasks are handed to the Owner; never removes yourself or the last Owner); Workspace: read-only automations overview, time zone, shortcuts)
+2. Contacts and companies — add, edit, search, tags, filters, CSV/Google Sheets import with duplicate check on email and phone. ✅ done: list with search/filters, add, edit, delete, contact page, tags, CSV import with duplicate check (email + digits-only phone). Imported contacts are assigned to the importer (auto-assign comes in module 6)
+3. Pipelines — drag-and-drop Kanban. Sales: New, Contacted, Meeting Booked, Proposal Sent, Won, Lost. Client Onboarding: Signed, Kickoff Booked, Setup in Progress, Live. ✅ done: board with native HTML5 drag-and-drop (no library), add/edit/delete deal at `/deals/new` and `/deals/[id]`; a deal's status follows its stage (Won/Lost). Deal-Won → onboarding deal automation is module 6. **Custom pipelines**: anyone signed in can create/edit pipelines at `/pipelines/new` and `/pipelines/[id]/edit` (custom name + stages, each stage has a type: open / won / lost stored in `stages.outcome`; a deal's status follows its stage's type). `Sales` and `Client Onboarding` can't be renamed/deleted (the Won automation finds them by name). A pipeline with deals can't be deleted. DB changes live in `supabase/pipelines.sql`
+4. Activity timeline — calls, emails, notes, meetings with outcome and next step. ✅ done: log form + timeline on the contact page (`/contacts/[id]`), "Next step" banner and list column; logging activity resets last_activity_at and clears the stale flag. Activities are visible to whoever owns the contact
+5. Tasks — logging a call with a next step auto-creates a follow-up task; Today and Overdue views. ✅ done: `/tasks` (Today / Overdue / Upcoming / Done, add/edit/delete/complete). Any activity logged with a next step creates a task (due date from the "Follow up on" field, default tomorrow 9am) assigned to the contact's owner. Time zone for "today" is `TZ` in `src/lib/dates.ts` (currently Asia/Kolkata)
+6. Simple automations — new lead → assign owner; deal Won → create onboarding deal; no activity for 7 days → flag stale. ✅ built as database triggers/functions in `supabase/automations.sql` (run after `schema.sql`): `assign_owner_to_new_contact` (owner_id null → fewest open leads), `create_onboarding_deal` (Sales deal → Won creates "Onboarding: …" deal at Signed + a kickoff task, linked by `deals.source_deal_id`), `refresh_stale_leads()` (7 days, hourly via pg_cron if available, and whenever Contacts/Home load). Owner picks "Auto-assign" on Add contact; Owner CSV imports are auto-assigned
+7. Lead capture form — public form (`/f/[slug]`) creates a contact and assigns an owner. ✅ done: Owner manages forms at `/forms` (name, slug, heading, assign-to or auto-assign, tags, source, live/paused); public page `/f/[slug]` (no login). Submissions go through the security-definer function `submit_lead_form` (anon role, `supabase/forms.sql`) so no service key is needed in app code: validates, dedupes on email/phone, creates the contact (owner auto-assigned), logs a note with next step "Make first contact" and a task due tomorrow. Honeypot field against bots; no rate limiting yet
+8. Email templates with merge fields (logged on timeline; no real sending yet). ✅ done: `/templates` (list, new, edit, delete; sidebar "Templates"), merge fields defined in `src/lib/merge.ts` (`{{first_name}}`, `{{last_name}}`, `{{full_name}}`, `{{company}}`, `{{email}}`, `{{phone}}`, `{{owner_name}}`, `{{sender_name}}`, `{{today}}`; unknown fields are rejected on save), "Email" button on a contact → `/contacts/[id]/email` composer: pick a template, edit, "Log email on timeline" (type=email, outcome=Sent; optional next step creates a task). Shared helper `src/lib/log-activity.ts`. Nothing is actually sent
+9. Dashboard — leads by source, calls per day, meetings booked, pipeline value by stage, win rate, results by rep. ✅ done: `/dashboard` — stat tiles (new leads, calls, meetings booked, win rate, open pipeline value), calls-per-day columns, leads-by-source bars, pipeline-value-by-stage bars (pipeline switcher), results-by-rep table; range 7/14/30 days. Charts are hand-built HTML/CSS in `src/components/charts.tsx` (no chart library; thin marks, one accent colour, hover tooltips, "View as table"). Win rate and "won" use `deals.closed_at` (set by trigger, `supabase/dashboard.sql`). "Meetings booked" = activities with outcome "Booked meeting". Reps only see their own numbers (row-level security). `scripts/demo-activity.mjs` generates fake calls/emails/meetings so charts aren't sparse
+10. Export any list to CSV. ✅ done: `GET /export/[kind]` (`src/app/export/[kind]/route.ts`) for `contacts` (same search/filters as the list, columns re-importable by Import CSV), `tasks` (current tab + assignee), `deals` (`?p=<pipeline id>`), `timeline` (`?contact=<id>`). Runs as the signed-in user so row-level security limits a Rep to their own records. `src/lib/csv.ts` quotes cells, adds an Excel BOM and defuses spreadsheet formulas (`=`, `@`, `+`/`-` that aren't phone numbers). Shared filter code: `src/lib/contact-filters.ts`, `src/lib/tasks.ts`
+
+**All 10 v1 modules are built.** Possible next steps: README + git/GitHub, deploy to Vercel (set the 3 env vars there), real email sending, rate-limiting the public form, per-role permissions for pipelines/forms.
+
+## Database
+Schema is in `supabase/schema.sql`, then `supabase/automations.sql` (both re-runnable; pasted into the Supabase SQL Editor). Tables: profiles, companies, contacts, pipelines, stages, deals, activities, tasks, email_templates, lead_forms. Row-level security: Owner sees all, Rep sees rows where they are owner/assignee. Unique index on contact email and phone for the duplicate check.
+
+Seed with `npm run seed` (`scripts/seed.mjs`): users `manav@leadtrove.demo` (Owner) and `alex@leadtrove.demo` (Rep), password `LeadTrove-demo-1`; 10 companies, 30 contacts, 15 deals, activities and tasks (some overdue).
+
+## Design
+Clean, modern, professional. Dark left sidebar (Dashboard, Contacts, Pipelines, Tasks, Forms, Settings), top bar, white cards, **one accent colour** (teal, `--color-accent` in `src/app/globals.css`). Must work on a laptop screen and look good in a 2-minute screen recording. Structure is inspired by GoHighLevel, but use LeadTrove's own name, logo (`public/logo.png`, `public/logo-icon.png`), colours and icons. **Do not copy GoHighLevel branding or exact design.**
+
+## Welcome page
+`/welcome` (sidebar "Home") is the landing page after login: "Welcome back, {first name}", a daily sales quote and a fun fact from `src/lib/sales-content.ts`. Keep quotes properly attributed and facts non-fabricated.
+
+## Commands
+- `npm run dev` — run locally at http://localhost:3000
+- `npm run seed` — reset and refill demo data
+- `npm run lint` / `npx tsc --noEmit` — checks

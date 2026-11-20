@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-accent: #0b7f8c;
+  --color-accent-dark: #096874;
+  --color-accent-soft: #e6f4f6;
+  --color-sidebar: #0f1b2d;
+  --color-sidebar-hover: #1a2a42;
+  --font-sans: var(--font-geist-sans);
+}
+
+body {
+  background: #f6f8fb;
+  color: #0f172a;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+@layer components {
+  .input {
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .card {
+    @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+  }
+}
+
+/* Login page background animation: light travelling along circuit traces, and softly pulsing nodes. */
+@keyframes circuit-flow {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -336; }
+}
+@keyframes node-pulse {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+@keyframes chip-glow {
+  0%, 100% { opacity: 0.22; }
+  50% { opacity: 0.4; }
+}
+.circuit-flow { animation: circuit-flow 6s linear infinite; }
+.node-pulse { animation: node-pulse 4s ease-in-out infinite; }
+.chip-glow { animation: chip-glow 5s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .circuit-flow, .node-pulse, .chip-glow { animation: none; }
+  .circuit-flow { display: none; }
+}

@@ -1,0 +1,8 @@
+First Name,Last Name,Email,Phone,Company,Source,Tags
+Ruby,Fletcher,ruby.fletcher@coastalpools.example,+1 555 0201,Coastal Pools,Google Ads,"new-lead, hot"
+Kai,Andersen,kai.andersen@coastalpools.example,+1 555 0202,Coastal Pools,Referral,warm
+Chloe,Barker,chloe.barker@oakandivy.example,+1 555 0203,Oak & Ivy Interiors,Instagram,new-lead
+Sarah,Mitchell,sarah.mitchell@brightsmile.example,+1 555 0204,Bright Smile Dental,Website Form,duplicate-email
+Dana,Lowe,dana.lowe@oakandivy.example,(1) 555-0100,Oak & Ivy Interiors,LinkedIn,duplicate-phone
+Leo,Park,not-an-email,+1 555 0206,Park Logistics,Event,bad-email
+Mei,Tanaka,mei.tanaka@parklogistics.example,,Park Logistics,Event,"follow-up, warm"
