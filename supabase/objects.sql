@@ -71,5 +71,4 @@ update roles set permissions = permissions || '{"objects.manage":false,"records.
   where name in ('Rep', 'Manager') and not (permissions ? 'records.edit');
 update roles set permissions = permissions || '{"objects.manage":false,"records.edit":false}'::jsonb
   where name = 'Viewer' and not (permissions ? 'records.edit');
-update roles set permissions = permissions || '{"objects.manage":true,"records.edit":true}'::jsonb
-  where name = 'Owner';
+-- (The Owner role is locked and already allowed to do everything, so it needs no change.)
