@@ -18,5 +18,5 @@ export default function LoginTrovie() {
     document.addEventListener("focusout", blur);
     return () => { document.removeEventListener("focusin", focus); document.removeEventListener("focusout", blur); };
   }, []);
-  return <Trovie mood={mood} widthClass="w-36" />;
+  return <Trovie mood={mood} widthClass="w-48" />;
 }

@@ -33,11 +33,11 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
               <li key={b} className="flex items-center gap-3 text-base text-slate-200 xl:text-lg"><Check />{b}</li>
             ))}
           </ul>
-          <div className="mt-8 pl-1"><LoginTrovie /></div>
+          <div className="mt-6 pl-1"><LoginTrovie /></div>
         </section>
 
         {/* right: the login card */}
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md xl:translate-x-10">
           <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-8 shadow-[0_0_90px_-25px_rgba(34,211,238,0.55)] backdrop-blur-xl sm:p-9">
             <div className="flex items-center justify-center gap-3">
               <Image src="/logo-icon-glow.png" alt="" width={44} height={44} className="h-11 w-11" priority />
