@@ -38,7 +38,7 @@ export default function AskBar({ firstName }: { firstName: string }) {
         </button>
       </form>
       <p className={`mt-3 text-center text-sm ${note ? "text-accent" : "text-transparent"}`} aria-live="polite">
-        The LeadTrove assistant is coming soon. This box isn&apos;t connected yet.
+        Trovie, your AI assistant, is coming soon. This box isn&apos;t connected yet.
       </p>
     </section>
   );

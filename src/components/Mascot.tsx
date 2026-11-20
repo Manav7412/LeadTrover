@@ -4,10 +4,10 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 const TIPS = [
-  "Hi! I'm your LeadTrove assistant.",
-  "Soon you can ask me who needs a follow-up today.",
+  "Hi! I'm Trovie, your LeadTrove assistant.",
+  "Soon you can ask Trovie who needs a follow-up today.",
   "Try: “Show my stale leads”.",
-  "I'll help you log calls and book meetings.",
+  "I'm Trovie. I'll help you log calls and book meetings.",
   "Every lead needs an owner and a next step!",
 ];
 
