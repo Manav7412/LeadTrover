@@ -49,21 +49,14 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
             <div className="my-6 flex items-center gap-3 text-xs text-slate-400">
               <span className="h-px flex-1 bg-white/10" />Try a demo account<span className="h-px flex-1 bg-white/10" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                ["Manav", "Owner · sees everything", "manav@leadtrove.demo"],
-                ["Alex", "Rep · sees own leads", "alex@leadtrove.demo"],
-              ].map(([name, role, email]) => (
-                <form key={email} action={login}>
-                  <input type="hidden" name="email" value={email} />
-                  <input type="hidden" name="password" value={DEMO_PASSWORD} />
-                  <button className="w-full rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-left transition hover:border-cyan-300/50 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/60">
-                    <span className="block text-sm font-medium text-white">{name}</span>
-                    <span className="block text-xs text-slate-400">{role}</span>
-                  </button>
-                </form>
-              ))}
-            </div>
+            <form action={login}>
+              <input type="hidden" name="email" value="guest@leadtrove.demo" />
+              <input type="hidden" name="password" value={DEMO_PASSWORD} />
+              <button className="w-full rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-left transition hover:border-cyan-300/50 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/60">
+                <span className="block text-sm font-medium text-white">Guest</span>
+                <span className="block text-xs text-slate-400">Read-only · look around, nothing can be changed</span>
+              </button>
+            </form>
 
             <p className="mt-6 text-center text-xs text-slate-400">Don&apos;t have an account? Ask your administrator to add you.</p>
           </div>

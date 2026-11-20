@@ -10,12 +10,14 @@ const clean = (v: FormDataEntryValue | null | undefined) => {
   const s = String(v ?? "").trim();
   return s === "" ? null : s;
 };
+const GUEST_EMAIL = "guest@leadtrove.demo"; // shared public demo login: must stay read-only
 const looksLikeEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 
 // ---------- Your profile ----------
 
 export async function updateProfile(_prev: MessageState, formData: FormData): Promise<MessageState> {
   const { profile } = await requireProfile();
+  if (profile.email === GUEST_EMAIL) return { error: "The guest demo account is read-only." };
   const name = clean(formData.get("full_name"));
   const jobTitle = clean(formData.get("job_title"));
   const phone = clean(formData.get("phone"));
@@ -30,7 +32,8 @@ export async function updateProfile(_prev: MessageState, formData: FormData): Pr
 }
 
 export async function changePassword(_prev: MessageState, formData: FormData): Promise<MessageState> {
-  const { supabase } = await requireProfile();
+  const { supabase, profile } = await requireProfile();
+  if (profile.email === GUEST_EMAIL) return { error: "The guest demo account is read-only." };
   const password = String(formData.get("password") ?? "");
   if (password.length < 8) return { error: "Use at least 8 characters." };
   if (password !== String(formData.get("confirm") ?? "")) return { error: "The two passwords don't match." };

@@ -44,8 +44,8 @@ async function makeUser(email, fullName, role) {
   if (error) must({ error }, `create user ${email}`);
   // link the person to their role (the roles table exists once supabase/permissions.sql has been run)
   const { data: roleRows } = await db.from("roles").select("id, name");
-  const roleId = roleRows?.find((r) => r.name === (role === "owner" ? "Owner" : "Rep"))?.id;
-  must(await db.from("profiles").insert({ id: data.user.id, full_name: fullName, email, role, ...(roleId ? { role_id: roleId } : {}) }), "profile " + email);
+  const roleId = roleRows?.find((r) => r.name === ({ owner: "Owner", rep: "Rep", viewer: "Viewer" }[role]))?.id;
+  must(await db.from("profiles").insert({ id: data.user.id, full_name: fullName, email, role: role === "viewer" ? "rep" : role, ...(roleId ? { role_id: roleId } : {}) }), "profile " + email);
   return data.user.id;
 }
 
@@ -57,6 +57,7 @@ for (const t of ["lead_forms", "email_templates", "tasks", "activities", "deals"
 console.log("Creating users...");
 const manav = await makeUser("manav@leadtrove.demo", "Manav", "owner");
 const alex = await makeUser("alex@leadtrove.demo", "Alex", "rep");
+await makeUser("guest@leadtrove.demo", "Guest", "viewer"); // read-only login for the public demo button
 const ownerOf = (i) => (i % 2 === 0 ? manav : alex);
 
 // ---------- 2. Companies ----------
