@@ -18,7 +18,7 @@ export default function AskBar({ firstName }: { firstName: string }) {
         </button>
         <input
           value={text} onChange={(e) => { setText(e.target.value); setNote(false); }}
-          placeholder="Ask anything…" aria-label="Ask anything"
+          placeholder={`Ask anything… with your personal AI Assistant, ${firstName}`} aria-label="Ask your personal AI Assistant"
           className="min-w-0 flex-1 bg-transparent px-1 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
         />
         <button type="button" aria-label="Voice input" onClick={() => setNote(true)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100">
