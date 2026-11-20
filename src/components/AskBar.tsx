@@ -9,7 +9,7 @@ export default function AskBar({ firstName }: { firstName: string }) {
   const [note, setNote] = useState(false);
   const [focused, setFocused] = useState(false);
   return (
-    <section className="mt-10 flex flex-col items-center gap-2 pt-12 sm:flex-row sm:items-end sm:gap-6">
+    <section className="mt-10 flex flex-col items-center gap-2 pt-12 sm:flex-row-reverse sm:items-end sm:gap-6">
       <Mascot excited={focused || text.length > 0} />
       <div className="min-w-0 flex-1 text-center sm:pb-2">
       <h2 className="text-2xl font-light tracking-tight text-slate-900 sm:text-3xl">What&apos;s on your mind, {firstName}?</h2>
