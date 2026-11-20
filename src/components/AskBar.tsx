@@ -11,8 +11,8 @@ export default function AskBar({ firstName }: { firstName: string }) {
   return (
     <section className="mt-8">
       {/* heading on the left, mascot on the right standing on the top edge of the bar */}
-      <div className="flex flex-col items-center sm:flex-row sm:items-end sm:justify-between sm:gap-6">
-        <h2 className="pb-3 text-center text-2xl font-light tracking-tight text-slate-900 sm:text-left sm:text-3xl sm:pb-5">What&apos;s on your mind, {firstName}?</h2>
+      <div className="relative flex flex-col items-center sm:flex-row sm:items-end sm:justify-end sm:gap-6">
+        <h2 className="pb-3 text-center text-2xl font-light tracking-tight text-slate-900 sm:absolute sm:inset-x-0 sm:bottom-5 sm:z-10 sm:pb-0 sm:text-[1.65rem]">What&apos;s on your mind, {firstName}?</h2>
         <div className="relative z-0 -mb-4 pt-12 sm:mr-6">
           <Mascot excited={focused || text.length > 0} widthClass="w-32" />
         </div>
