@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { SOURCES, STATUSES, type FormState } from "@/lib/contacts";
+import type { CustomField } from "@/lib/objects";
+import CustomFieldInputs from "./CustomFieldInputs";
 
 type Defaults = {
   first_name?: string; last_name?: string; email?: string | null; phone?: string | null;
@@ -19,6 +21,8 @@ type Props = {
   submitLabel: string;
   cancelHref: string;
   autoAssign?: boolean;
+  customFields?: CustomField[];
+  customValues?: Record<string, unknown>;
 };
 
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
@@ -28,7 +32,7 @@ const Field = ({ label, children }: { label: string; children: React.ReactNode }
   </label>
 );
 
-export default function ContactForm({ action, defaults = {}, companies, team, isOwner, currentUserId, submitLabel, cancelHref, autoAssign = false }: Props) {
+export default function ContactForm({ action, defaults = {}, companies, team, isOwner, currentUserId, submitLabel, cancelHref, autoAssign = false, customFields = [], customValues }: Props) {
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
     <form action={formAction} className="card max-w-3xl space-y-5 p-6">
@@ -65,6 +69,12 @@ export default function ContactForm({ action, defaults = {}, companies, team, is
       <Field label="Tags (separate with commas)">
         <input name="tags" defaultValue={defaults.tags?.join(", ")} placeholder="hot, follow-up" className="input" />
       </Field>
+      {customFields.length > 0 && (
+        <div className="border-t border-slate-100 pt-5">
+          <h2 className="mb-3 text-sm font-semibold text-slate-900">More details</h2>
+          <CustomFieldInputs fields={customFields} values={customValues} columns />
+        </div>
+      )}
       {state?.error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>}
       <div className="flex gap-2">
         <button className="btn-primary" disabled={pending}>{pending ? "Saving…" : submitLabel}</button>

@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import type { CustomField } from "@/lib/objects";
 import type { FormState } from "@/lib/contacts";
+import CustomFieldInputs from "./CustomFieldInputs";
 
 type Action = (prev: FormState, formData: FormData) => Promise<FormState>;
 const label = "mb-1 block text-sm font-medium text-slate-700";
@@ -15,35 +16,7 @@ export default function RecordForm({ action, fields, values, owners, ownerId, ca
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
     <form action={formAction} className="card max-w-2xl space-y-4 p-6">
-      {fields.map((f) => {
-        const v = values?.[f.key];
-        const name = `f_${f.key}`;
-        if (f.type === "yesno") {
-          return (
-            <label key={f.id} className="flex items-center gap-2 text-sm font-medium text-slate-700">
-              <input type="checkbox" name={name} defaultChecked={v === true} className="h-4 w-4 rounded border-slate-300" /> {f.label}
-            </label>
-          );
-        }
-        return (
-          <label key={f.id} className="block">
-            <span className={label}>{f.label}{f.required && <span className="text-red-500"> *</span>}</span>
-            {f.type === "dropdown" ? (
-              <select name={name} defaultValue={typeof v === "string" ? v : ""} required={f.required} className="input">
-                <option value="">Choose…</option>
-                {f.options.map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
-            ) : (
-              <input
-                name={name} required={f.required} className="input"
-                type={f.type === "number" ? "number" : f.type === "date" ? "date" : "text"}
-                step={f.type === "number" ? "any" : undefined} maxLength={f.type === "text" ? 500 : undefined}
-                defaultValue={v === undefined || v === null ? "" : String(v)}
-              />
-            )}
-          </label>
-        );
-      })}
+      <CustomFieldInputs fields={fields} values={values} />
       {owners && (
         <label className="block">
           <span className={label}>Owner</span>

@@ -8,6 +8,8 @@ import { formatMoney } from "@/lib/deals";
 import { dateInput } from "@/lib/dates";
 import { can } from "@/lib/permissions";
 import { STATUS_STYLES, timeAgo } from "@/lib/contacts";
+import { getCustomFields } from "@/lib/custom-fields";
+import { showValue } from "@/lib/objects";
 import { deleteContact } from "../actions";
 
 export default async function ContactPage({ params, searchParams }: PageProps<"/contacts/[id]">) {
@@ -31,6 +33,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
     supabase.from("deals").select("id, title, value, status, stages(name)").eq("contact_id", id)
       .overrideTypes<{ id: string; title: string; value: number; status: string; stages: { name: string } | null }[], { merge: false }>(),
   ]);
+  const customFields = await getCustomFields(supabase, "contacts");
   const activities = acts ?? [];
   const nextStep = activities.find((a) => a.next_step)?.next_step ?? null;
   const closed = c.status === "customer" || c.status === "lost";
@@ -44,6 +47,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
     ["Source", c.source],
     ["Added", new Date(c.created_at).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })],
     ["Last activity", timeAgo(c.last_activity_at)],
+    ...customFields.map((f): [string, React.ReactNode] => [f.label, showValue(f, (c.custom ?? {})[f.key])]),
   ];
 
   return (

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
 import DealForm from "@/components/DealForm";
+import { getCustomFields } from "@/lib/custom-fields";
 import { createDeal } from "../../pipelines/actions";
 import { DENIED, can } from "@/lib/permissions";
 
@@ -29,6 +30,7 @@ export default async function NewDealPage({ searchParams }: PageProps<"/deals/ne
         isOwner={profile.scope === "all"}
         currentUserId={profile.id}
         defaults={{ pipeline_id: pipelineId, stage_id: stageId }}
+        customFields={await getCustomFields(supabase, "deals")}
         submitLabel="Add deal"
         cancelHref={`/pipelines?p=${pipelineId}`}
       />

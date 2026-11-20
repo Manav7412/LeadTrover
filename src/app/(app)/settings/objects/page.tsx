@@ -17,12 +17,16 @@ export default async function ObjectsPage() {
     (custom ?? []).map((o) => supabase.from("custom_records").select("id", { count: "exact", head: true }).eq("object_id", o.id)),
   );
 
+  const { data: extraRows } = await supabase.from("custom_fields").select("standard_object").not("standard_object", "is", null);
+  const extra: Record<string, number> = {};
+  for (const r of extraRows ?? []) extra[r.standard_object] = (extra[r.standard_object] ?? 0) + 1;
+
   return (
     <div className="space-y-6">
       <section className="card overflow-hidden">
         <div className="p-5 pb-3">
           <h2 className="text-sm font-semibold text-slate-900">Standard objects</h2>
-          <p className="mt-0.5 text-sm text-slate-500">The building blocks LeadTrove comes with. Their fields are fixed.</p>
+          <p className="mt-0.5 text-sm text-slate-500">What LeadTrove stores out of the box. Click Contacts or Deals to add your own fields, such as Address or Postal Code.</p>
         </div>
         <table className="w-full text-left text-sm">
           <thead className="border-y border-slate-100 text-xs uppercase tracking-wide text-slate-500">
@@ -32,10 +36,13 @@ export default async function ObjectsPage() {
             {STANDARD_OBJECTS.map((o, i) => (
               <tr key={o.table} className="align-top hover:bg-slate-50">
                 <td className="px-5 py-3">
-                  <Link href={o.href} className="font-medium text-slate-900 hover:text-accent">{o.name}</Link>
+                  <Link href={`/settings/objects/standard/${o.table}`} className="font-medium text-slate-900 hover:text-accent">{o.name}</Link>
                   <p className="text-xs text-slate-500">{o.description}</p>
                 </td>
-                <td className="px-3 py-3 text-xs text-slate-600">{o.fields.join(" · ")}</td>
+                <td className="px-3 py-3 text-xs text-slate-600">
+                  {o.fields.join(" · ")}
+                  {(extra[o.table] ?? 0) > 0 && <span className="ml-1 font-medium text-accent">+ {extra[o.table]} custom</span>}
+                </td>
                 <td className="px-3 py-3 text-right text-slate-700">{counts[i].count ?? "—"}</td>
               </tr>
             ))}

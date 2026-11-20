@@ -6,6 +6,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireProfile } from "@/lib/auth";
 import { STATUSES, type FormState } from "@/lib/contacts";
 import { DENIED, can } from "@/lib/permissions";
+import { getCustomFields, readCustomData } from "@/lib/custom-fields";
 
 const clean = (v: FormDataEntryValue | null | undefined) => {
   const s = String(v ?? "").trim();
@@ -45,8 +46,12 @@ async function readForm(formData: FormData, supabase: SupabaseClient) {
   if (email && !looksLikeEmail(email)) return { error: "That email address doesn't look right." } as const;
   const status = String(formData.get("status") ?? "new");
   const company_id = await resolveCompany(supabase, clean(formData.get("company")));
+  const customFields = await getCustomFields(supabase, "contacts");
+  const custom = readCustomData(customFields, formData);
+  if ("error" in custom) return { error: custom.error } as const;
   return {
     values: {
+      ...(customFields.length ? { custom: custom.data } : {}),
       first_name,
       last_name: clean(formData.get("last_name")) ?? "",
       email,

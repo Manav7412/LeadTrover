@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireProfile } from "@/lib/auth";
 import DealForm from "@/components/DealForm";
 import DeleteContactButton from "@/components/DeleteContactButton";
+import { getCustomFields } from "@/lib/custom-fields";
 import { updateDeal, deleteDeal } from "../../pipelines/actions";
 import { DENIED, can } from "@/lib/permissions";
 
@@ -34,6 +35,8 @@ export default async function DealPage({ params }: PageProps<"/deals/[id]">) {
         isOwner={profile.scope === "all"}
         currentUserId={profile.id}
         defaults={{ title: deal.title, value: Number(deal.value), contact_id: deal.contact_id, pipeline_id: deal.pipeline_id, stage_id: deal.stage_id, owner_id: deal.owner_id }}
+        customFields={await getCustomFields(supabase, "deals")}
+        customValues={deal.custom ?? {}}
         submitLabel="Save changes"
         cancelHref={`/pipelines?p=${deal.pipeline_id}`}
       />

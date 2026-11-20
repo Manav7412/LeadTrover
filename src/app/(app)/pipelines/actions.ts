@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireProfile } from "@/lib/auth";
 import type { FormState } from "@/lib/contacts";
 import { DENIED, can } from "@/lib/permissions";
+import { getCustomFields, readCustomData } from "@/lib/custom-fields";
 
 const clean = (v: FormDataEntryValue | null | undefined) => {
   const s = String(v ?? "").trim();
@@ -53,9 +54,12 @@ async function readDeal(formData: FormData) {
   const value = Number(clean(formData.get("value")) ?? 0);
   if (!Number.isFinite(value) || value < 0) return { error: "Value must be a positive number." } as const;
 
+  const customFields = await getCustomFields(supabase, "deals");
+  const custom = readCustomData(customFields, formData);
+  if ("error" in custom) return { error: custom.error } as const;
   return {
     supabase, profile,
-    values: { title, value, contact_id, company_id, stage_id, pipeline_id: stage.pipeline_id, status: stage.outcome },
+    values: { ...(customFields.length ? { custom: custom.data } : {}), title, value, contact_id, company_id, stage_id, pipeline_id: stage.pipeline_id, status: stage.outcome },
   } as const;
 }
 

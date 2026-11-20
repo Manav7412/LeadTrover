@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireProfile } from "@/lib/auth";
 import { DENIED, can } from "@/lib/permissions";
 import { FIELD_TYPES, slugify } from "@/lib/objects";
+import { CUSTOMIZABLE, type Customizable } from "@/lib/custom-fields";
 import type { MessageState } from "@/lib/contacts";
 
 const clean = (v: FormDataEntryValue | null | undefined) => {
@@ -55,7 +56,9 @@ export async function deleteObject(id: string) {
   redirect("/settings/objects");
 }
 
-export async function addField(objectId: string, _prev: MessageState, formData: FormData): Promise<MessageState> {
+type Target = { objectId: string } | { standard: Customizable };
+
+async function insertField(target: Target, formData: FormData): Promise<MessageState & { label?: string }> {
   const { supabase } = await requireManager();
   const label = clean(formData.get("label"));
   const type = String(formData.get("type") ?? "");
@@ -67,17 +70,36 @@ export async function addField(objectId: string, _prev: MessageState, formData: 
     : [];
   if (type === "dropdown" && options.length < 2) return { error: "A dropdown needs at least two choices, separated by commas." };
 
-  const { data: existing } = await supabase.from("custom_fields").select("key, position").eq("object_id", objectId);
+  const parent = "objectId" in target ? { object_id: target.objectId } : { standard_object: target.standard };
+  const { data: existing } = await supabase.from("custom_fields").select("key, position").match(parent);
   const keys = new Set((existing ?? []).map((f) => f.key));
   const base = slugify(label).replace(/-/g, "_") || "field";
   let key = base;
   for (let i = 2; keys.has(key); i++) key = `${base}_${i}`;
   const position = Math.max(0, ...(existing ?? []).map((f) => f.position)) + 1;
 
-  const { error } = await supabase.from("custom_fields").insert({ object_id: objectId, label, key, type, options, required: formData.get("required") === "on" && type !== "yesno", position });
-  if (error) return { error: error.message };
-  revalidatePath(`/settings/objects/${objectId}`);
+  const { error } = await supabase.from("custom_fields").insert({ ...parent, label, key, type, options, required: formData.get("required") === "on" && type !== "yesno", position });
+  if (error) return { error: error.message.includes("standard_object") ? "Run supabase/custom-fields.sql in Supabase first." : error.message };
   return { message: `Added “${label}”.` };
+}
+
+export async function addField(objectId: string, _prev: MessageState, formData: FormData): Promise<MessageState> {
+  const res = await insertField({ objectId }, formData);
+  if (res?.message) revalidatePath(`/settings/objects/${objectId}`);
+  return res;
+}
+
+export async function addStandardField(standard: string, _prev: MessageState, formData: FormData): Promise<MessageState> {
+  if (!(CUSTOMIZABLE as readonly string[]).includes(standard)) return { error: "Custom fields aren't available for that object." };
+  const res = await insertField({ standard: standard as Customizable }, formData);
+  if (res?.message) { revalidatePath(`/settings/objects/standard/${standard}`); revalidatePath("/contacts", "layout"); }
+  return res;
+}
+
+export async function deleteStandardField(standard: string, fieldId: string) {
+  const { supabase } = await requireManager();
+  await supabase.from("custom_fields").delete().eq("id", fieldId).eq("standard_object", standard);
+  revalidatePath(`/settings/objects/standard/${standard}`);
 }
 
 export async function deleteField(objectId: string, fieldId: string) {

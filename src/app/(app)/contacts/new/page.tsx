@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
 import ContactForm from "@/components/ContactForm";
+import { getCustomFields } from "@/lib/custom-fields";
 import { createContact } from "../actions";
 import { DENIED, can } from "@/lib/permissions";
 
@@ -22,6 +23,7 @@ export default async function NewContactPage() {
         isOwner={profile.scope === "all"}
         currentUserId={profile.id}
         autoAssign
+        customFields={await getCustomFields(supabase, "contacts")}
         submitLabel="Add contact"
         cancelHref="/contacts"
       />

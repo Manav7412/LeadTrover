@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import type { FormState } from "@/lib/contacts";
+import type { CustomField } from "@/lib/objects";
+import CustomFieldInputs from "./CustomFieldInputs";
 
 type Props = {
   action: (prev: FormState, formData: FormData) => Promise<FormState>;
@@ -15,9 +17,11 @@ type Props = {
   defaults: { title?: string; value?: number; contact_id?: string | null; pipeline_id: string; stage_id: string; owner_id?: string | null };
   submitLabel: string;
   cancelHref: string;
+  customFields?: CustomField[];
+  customValues?: Record<string, unknown>;
 };
 
-export default function DealForm({ action, pipelines, stages, contacts, team, isOwner, currentUserId, defaults, submitLabel, cancelHref }: Props) {
+export default function DealForm({ action, pipelines, stages, contacts, team, isOwner, currentUserId, defaults, submitLabel, cancelHref, customFields = [], customValues }: Props) {
   const [state, formAction, pending] = useActionState(action, undefined);
   const [pipelineId, setPipelineId] = useState(defaults.pipeline_id);
   const stageOptions = stages.filter((s) => s.pipeline_id === pipelineId);
@@ -64,6 +68,12 @@ export default function DealForm({ action, pipelines, stages, contacts, team, is
           <label className="block"><span className={label}>Owner</span><input disabled value="You" className="input bg-slate-50" /></label>
         )}
       </div>
+      {customFields.length > 0 && (
+        <div className="border-t border-slate-100 pt-5">
+          <h2 className="mb-3 text-sm font-semibold text-slate-900">More details</h2>
+          <CustomFieldInputs fields={customFields} values={customValues} columns />
+        </div>
+      )}
       {state?.error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>}
       <div className="flex gap-2">
         <button className="btn-primary" disabled={pending}>{pending ? "Saving…" : submitLabel}</button>

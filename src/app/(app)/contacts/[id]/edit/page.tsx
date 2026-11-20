@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireProfile } from "@/lib/auth";
 import ContactForm from "@/components/ContactForm";
+import { getCustomFields } from "@/lib/custom-fields";
 import { updateContact } from "../../actions";
 import { DENIED, can } from "@/lib/permissions";
 
@@ -26,6 +27,8 @@ export default async function EditContactPage({ params }: PageProps<"/contacts/[
         team={team ?? []}
         isOwner={profile.scope === "all"}
         currentUserId={profile.id}
+        customFields={await getCustomFields(supabase, "contacts")}
+        customValues={c.custom ?? {}}
         submitLabel="Save changes"
         cancelHref={`/contacts/${id}`}
       />
