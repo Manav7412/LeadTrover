@@ -102,6 +102,27 @@ export async function deleteStandardField(standard: string, fieldId: string) {
   revalidatePath(`/settings/objects/standard/${standard}`);
 }
 
+// Edit a field's name, choices and required flag. The type stays fixed so saved values keep making sense.
+export async function updateField(backTo: string, fieldId: string, _prev: MessageState, formData: FormData): Promise<MessageState> {
+  const { supabase } = await requireManager();
+  if (!backTo.startsWith("/settings/objects")) return { error: "Something went wrong. Reload and try again." };
+  const label = clean(formData.get("label"));
+  if (!label) return { error: "The field needs a name." };
+  if (label.length > 60) return { error: "Field names must be 60 characters or fewer." };
+  const { data: field } = await supabase.from("custom_fields").select("type").eq("id", fieldId).maybeSingle();
+  if (!field) return { error: "That field no longer exists." };
+  const changes: Record<string, unknown> = { label, required: formData.get("required") === "on" && field.type !== "yesno" };
+  if (field.type === "dropdown") {
+    const options = [...new Set(String(formData.get("options") ?? "").split(/[\n,]/).map((o) => o.trim()).filter(Boolean))].slice(0, 30);
+    if (options.length < 2) return { error: "A dropdown needs at least two choices, separated by commas." };
+    changes.options = options;
+  }
+  const { error } = await supabase.from("custom_fields").update(changes).eq("id", fieldId);
+  if (error) return { error: error.message };
+  revalidatePath("/", "layout");
+  redirect(backTo);
+}
+
 export async function deleteField(objectId: string, fieldId: string) {
   const { supabase } = await requireManager();
   await supabase.from("custom_fields").delete().eq("id", fieldId);
