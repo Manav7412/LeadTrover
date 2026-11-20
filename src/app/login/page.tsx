@@ -6,7 +6,12 @@ import { login } from "./actions";
 
 const DEMO_PASSWORD = "LeadTrove-demo-1"; // fake demo accounts only
 
-const BULLETS = ["Centralized pipeline", "Smart follow-ups", "An owner and a next step on every lead"];
+const BULLETS = [
+  "Centralized pipeline",
+  "Smart follow-ups",
+  "An owner and a next step on every lead",
+  "Ask Trovie (AI Sales Assistant) what to do next",
+];
 
 function Check() {
   return (
