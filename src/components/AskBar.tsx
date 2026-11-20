@@ -9,13 +9,17 @@ export default function AskBar({ firstName }: { firstName: string }) {
   const [note, setNote] = useState(false);
   const [focused, setFocused] = useState(false);
   return (
-    <section className="mt-10 flex flex-col items-center gap-2 pt-12 sm:flex-row-reverse sm:items-end sm:gap-6">
-      <Mascot excited={focused || text.length > 0} />
-      <div className="min-w-0 flex-1 text-center sm:pb-2">
-      <h2 className="text-2xl font-light tracking-tight text-slate-900 sm:text-3xl">What&apos;s on your mind, {firstName}?</h2>
+    <section className="mt-8">
+      {/* heading on the left, mascot on the right standing on the top edge of the bar */}
+      <div className="flex flex-col items-center sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+        <h2 className="pb-3 text-center text-2xl font-light tracking-tight text-slate-900 sm:text-left sm:text-3xl sm:pb-5">What&apos;s on your mind, {firstName}?</h2>
+        <div className="relative z-0 -mb-4 pt-12 sm:mr-6">
+          <Mascot excited={focused || text.length > 0} widthClass="w-32" />
+        </div>
+      </div>
       <form
         onSubmit={(e) => { e.preventDefault(); if (text.trim()) setNote(true); }}
-        className="mx-auto mt-5 flex max-w-2xl items-center gap-2 rounded-full border border-slate-200 bg-white py-2 pl-3 pr-2 shadow-[0_6px_24px_-8px_rgba(15,23,42,0.18)] focus-within:border-slate-300"
+        className="relative z-10 flex w-full items-center gap-2 rounded-full border border-slate-200 bg-white py-2 pl-3 pr-2 shadow-[0_6px_24px_-8px_rgba(15,23,42,0.18)] focus-within:border-slate-300"
       >
         <button type="button" aria-label="Add attachment" onClick={() => setNote(true)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100">
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
@@ -33,10 +37,9 @@ export default function AskBar({ firstName }: { firstName: string }) {
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><rect x="5" y="9" width="2" height="6" rx="1" /><rect x="9" y="5" width="2" height="14" rx="1" /><rect x="13" y="8" width="2" height="8" rx="1" /><rect x="17" y="10.5" width="2" height="3" rx="1" /></svg>
         </button>
       </form>
-      <p className={`mt-3 text-sm ${note ? "text-accent" : "text-transparent"}`} aria-live="polite">
+      <p className={`mt-3 text-center text-sm ${note ? "text-accent" : "text-transparent"}`} aria-live="polite">
         The LeadTrove assistant is coming soon. This box isn&apos;t connected yet.
       </p>
-      </div>
     </section>
   );
 }

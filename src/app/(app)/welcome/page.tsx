@@ -78,6 +78,9 @@ export default async function WelcomePage() {
       <div className="grid items-start gap-5 xl:grid-cols-[260px_minmax(0,1fr)_260px]">
         <div className="space-y-5">
           <Widget title="Quick actions">
+            {!(can(profile, "contacts.create") || can(profile, "tasks.manage") || can(profile, "activities.log")) && (
+              <p className="py-3 text-sm text-slate-500">Your role is view-only, so there are no quick actions to show.</p>
+            )}
             <div className="space-y-2.5">
               {[
                 { label: "Quick lead", hint: "Add a contact", href: "/contacts/new", ok: can(profile, "contacts.create"), d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM19 8v6M22 11h-6" },
