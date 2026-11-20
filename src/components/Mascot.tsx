@@ -43,6 +43,8 @@ export default function Mascot({ excited = false }: { excited?: boolean }) {
       </p>
 
       <div className="relative pt-3" style={{ transform: `translateX(${shift}px)`, transition: "transform 0.4s ease-out" }}>
+        {/* soft glow behind the white mascot so it stands out on the light page */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-3 top-6 rounded-full bg-[radial-gradient(closest-side,rgba(20,184,166,0.22),rgba(20,184,166,0.08)_60%,transparent)]" />
         {/* little glowing dots orbiting the mascot */}
         <div className={`mascot-orbit pointer-events-none absolute inset-0 ${excited ? "is-excited" : ""}`}>
           <span className="absolute left-0 top-1/3 h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_10px_3px_rgba(34,211,238,0.6)]" />
@@ -51,7 +53,7 @@ export default function Mascot({ excited = false }: { excited?: boolean }) {
         </div>
         <div className={`mascot-float ${excited ? "is-excited" : ""}`}>
           <div className="mascot-wiggle">
-            <Image src="/mascot.png" alt="" width={557} height={640} className={`mascot-glow h-auto w-full ${excited ? "is-excited" : ""}`} unoptimized />
+            <Image src="/mascot.png" alt="" width={545} height={640} className={`mascot-glow h-auto w-full ${excited ? "is-excited" : ""}`} unoptimized />
           </div>
         </div>
         <div className="mascot-shadow mx-auto mt-1 h-2.5 w-24 rounded-full bg-slate-900/30 blur-sm" />
