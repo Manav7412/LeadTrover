@@ -19,7 +19,7 @@ export default function CustomFieldInputs({ fields, values, columns = false }: {
         }
         return (
           <label key={f.id} className="block">
-            <span className={label}>{f.label}{f.required && <span className="text-red-500"> *</span>}</span>
+            <span className={label}>{f.label}{f.required && <sup className="ml-0.5 text-sm font-bold text-red-600" title="Required">*</sup>}</span>
             {f.type === "dropdown" ? (
               <select name={name} defaultValue={typeof v === "string" ? v : ""} required={f.required} className="input">
                 <option value="">Choose…</option>

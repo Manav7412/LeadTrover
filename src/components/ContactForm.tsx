@@ -25,7 +25,7 @@ type Props = {
   customValues?: Record<string, unknown>;
 };
 
-const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+const Field = ({ label, children }: { label: React.ReactNode; children: React.ReactNode }) => (
   <label className="block">
     <span className="mb-1 block text-sm font-medium text-slate-700">{label}</span>
     {children}
@@ -37,7 +37,7 @@ export default function ContactForm({ action, defaults = {}, companies, team, is
   return (
     <form action={formAction} className="card max-w-3xl space-y-5 p-6">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="First name *"><input name="first_name" required defaultValue={defaults.first_name} className="input" /></Field>
+        <Field label={<>First name<sup className="ml-0.5 text-sm font-bold text-red-600" title="Required">*</sup></>}><input name="first_name" required defaultValue={defaults.first_name} className="input" /></Field>
         <Field label="Last name"><input name="last_name" defaultValue={defaults.last_name} className="input" /></Field>
         <Field label="Email"><input name="email" type="email" defaultValue={defaults.email ?? ""} className="input" /></Field>
         <Field label="Phone"><input name="phone" defaultValue={defaults.phone ?? ""} className="input" /></Field>
