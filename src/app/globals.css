@@ -71,3 +71,25 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .mascot-float, .mascot-glow, .mascot-shadow, .mascot-orbit, .mascot-bubble, .mascot-hover:hover .mascot-wiggle { animation: none; }
 }
+
+/* ---- Trovie, the layered animated mascot (components/Trovie.tsx) ---- */
+@keyframes trovie-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@keyframes trovie-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.008, 1.014); } }
+@keyframes trovie-sway { 0%, 100% { transform: rotate(-1.6deg); } 50% { transform: rotate(1.6deg); } }
+@keyframes trovie-blink { 0%, 93%, 100% { opacity: 0; } 95%, 97% { opacity: 1; } }
+@keyframes trovie-pulse { 0%, 100% { opacity: 0.25; transform: translate(-50%, -50%) scale(0.85); } 50% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.15); } }
+@keyframes trovie-spin { to { transform: rotate(360deg); } }
+@keyframes trovie-hop { 0%, 100% { transform: translateY(0); } 30% { transform: translateY(-22px); } 55% { transform: translateY(0); } 72% { transform: translateY(-7px); } }
+.trovie-bob { animation: trovie-bob 4.4s ease-in-out infinite; }
+.trovie-bob.is-lively { animation-duration: 2.2s; }
+.trovie-breathe { animation: trovie-breathe 3.6s ease-in-out infinite; transform-origin: 50% 100%; }
+.trovie-sway { animation: trovie-sway 5.2s ease-in-out infinite; }
+.trovie-blink { animation: trovie-blink 5s ease-in-out infinite; }
+.trovie-blink.is-shut { animation: none; opacity: 1; }
+.trovie-pulse { animation: trovie-pulse 2.6s ease-in-out infinite; }
+.trovie-spin { animation: trovie-spin 14s linear infinite; }
+.trovie-spin.is-lively { animation-duration: 5s; }
+.trovie-hop { animation: trovie-hop 0.7s ease-out 1; }
+@media (prefers-reduced-motion: reduce) {
+  .trovie-bob, .trovie-breathe, .trovie-sway, .trovie-blink, .trovie-pulse, .trovie-spin, .trovie-hop { animation: none; }
+}

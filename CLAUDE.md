@@ -47,6 +47,9 @@ Seed with `npm run seed` (`scripts/seed.mjs`): users `manav@leadtrove.demo` (Own
 ## Design
 Clean, modern, professional. Dark left sidebar (Dashboard, Contacts, Pipelines, Tasks, Forms, Settings), top bar, white cards, **one accent colour** (teal, `--color-accent` in `src/app/globals.css`). Must work on a laptop screen and look good in a 2-minute screen recording. Structure is inspired by GoHighLevel, but use LeadTrove's own name, logo (`public/logo.png`, `public/logo-icon.png`), colours and icons. **Do not copy GoHighLevel branding or exact design.**
 
+## Trovie on the login page
+`src/components/Trovie.tsx` is a layered, animated version of the mascot (artwork `design/trovie-front-original.png`, cut into `public/trovie-head.png` + `trovie-body.png`): floats, breathes, head turns toward the mouse, blinks, antenna and chest glow, orbiting dots. `LoginTrovie.tsx` makes him react to the form (friendly on email, covers his eyes on password). Shown only on desktop (`lg`), under the login headline. The Home page still uses the older `Mascot.tsx`.
+
 ## Welcome page
 Layout: hero, quote + fun fact, then the "What's on your mind, {name}?" AskBar (`src/components/AskBar.tsx`, UI only, not connected to any AI yet) with the animated AI mascot beside it, named **Trovie** (`src/components/Mascot.tsx`, image `public/mascot.png` cut from `design/mascot-light-original.png` (the dark version is `design/mascot-original.png`), CSS animations in `globals.css`), then two columns: left Quick actions / Last actions / Pipeline snapshot (Sales open value per stage + deals won in 30 days), right Today's tasks (incl. overdue) / Stale leads / mini Calendar. Quick actions are hidden if the role lacks the permission.
 `/welcome` (sidebar "Home") is the landing page after login: "Welcome back, {first name}", a daily sales quote and a fun fact from `src/lib/sales-content.ts`. Keep quotes properly attributed and facts non-fabricated.

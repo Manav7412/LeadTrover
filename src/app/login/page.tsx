@@ -1,6 +1,7 @@
 import Image from "next/image";
 import CircuitBackground from "@/components/CircuitBackground";
 import LoginForm from "@/components/LoginForm";
+import LoginTrovie from "@/components/LoginTrovie";
 import { login } from "./actions";
 
 const DEMO_PASSWORD = "LeadTrove-demo-1"; // fake demo accounts only
@@ -32,6 +33,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
               <li key={b} className="flex items-center gap-3 text-base text-slate-200 xl:text-lg"><Check />{b}</li>
             ))}
           </ul>
+          <div className="mt-8 pl-1"><LoginTrovie /></div>
         </section>
 
         {/* right: the login card */}
