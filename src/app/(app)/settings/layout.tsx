@@ -9,6 +9,7 @@ export default async function SettingsLayout({ children }: { children: React.Rea
     ...(can(profile, "team.manage") ? [{ href: "/settings/team", label: "Team", hint: "People and logins" }] : []),
     { href: "/settings/roles", label: "Roles & permissions", hint: "What each role can do" },
     { href: "/settings/sharing", label: "Sharing rules", hint: "Who sees whose records" },
+    { href: "/settings/objects", label: "Objects", hint: "Standard and custom objects" },
     { href: "/settings/workspace", label: "Workspace", hint: "Automations and basics" },
   ];
   return (

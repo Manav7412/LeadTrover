@@ -24,7 +24,7 @@ const NAV = [
   { href: "/settings", label: "Settings", icon: icon("M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z") },
 ];
 
-export default function Sidebar({ hidden = [] }: { hidden?: string[] }) {
+export default function Sidebar({ hidden = [], objects = [] }: { hidden?: string[]; objects?: { slug: string; plural: string }[] }) {
   const pathname = usePathname();
   return (
     <aside className="fixed inset-y-0 left-0 flex w-56 flex-col bg-sidebar text-slate-300">
@@ -50,6 +50,21 @@ export default function Sidebar({ hidden = [] }: { hidden?: string[] }) {
             </Link>
           );
         })}
+        {objects.length > 0 && (
+          <>
+            <p className="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Custom objects</p>
+            {objects.map((o) => {
+              const href = `/objects/${o.slug}`;
+              const active = pathname === href || pathname.startsWith(href + "/");
+              return (
+                <Link key={o.slug} href={href} className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${active ? "bg-sidebar-hover text-white" : "hover:bg-sidebar-hover/60 hover:text-white"}`}>
+                  <span className={active ? "text-teal-300" : "text-slate-400"}>{icon("M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8")}</span>
+                  {o.plural}
+                </Link>
+              );
+            })}
+          </>
+        )}
       </nav>
       <p className="px-5 py-4 text-xs text-slate-500">Demo data only</p>
     </aside>

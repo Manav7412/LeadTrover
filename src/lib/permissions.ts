@@ -40,6 +40,13 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
+    title: "Custom objects",
+    items: [
+      { key: "records.edit", label: "Work with custom records", hint: "Add, edit and delete records of custom objects" },
+      { key: "objects.manage", label: "Manage custom objects", hint: "Create objects and change their fields in Settings" },
+    ],
+  },
+  {
     title: "Administration",
     items: [
       { key: "team.manage", label: "Manage the team", hint: "Add and remove people and change their role" },
@@ -67,7 +74,7 @@ export function legacyAccess(role: string): Access {
   if (role === "owner") return { roleId: null, roleName: "Owner", scope: "all", permissions: allOn(), isOwner: true };
   return {
     roleId: null, roleName: "Rep", scope: "own", isOwner: false,
-    permissions: { ...allOn(), "forms.manage": false, "team.manage": false, "roles.manage": false },
+    permissions: { ...allOn(), "forms.manage": false, "team.manage": false, "roles.manage": false, "objects.manage": false },
   };
 }
 

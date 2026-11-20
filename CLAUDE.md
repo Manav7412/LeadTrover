@@ -33,6 +33,8 @@ Keys live in `.env.local` only (git-ignored). Never commit it or print keys. `.e
 
 **Module 11 (extra): Calendar + Reports.** `/calendar` (month grid, `?m=YYYY-MM`; tasks, overdue in red, logged meetings; RLS limits Reps to their own) and `/reports` (needs `dashboard.view`: open leads with no owner / no next step / stale, plus a workload-by-person table for people who see all). Sidebar links added; no SQL changes.
 
+**Module 12 (extra): Custom objects.** Run `supabase/objects.sql` (after `permissions.sql`). Settings > **Objects** (`/settings/objects`): read-only list of standard objects (catalog in `src/lib/objects.ts`, with record counts) + custom objects; `/settings/objects/[id]` edits details and fields (types: text, number, date, dropdown, yes/no; required flag). Records live at `/objects/[slug]` (list, `/new`, `/[id]` edit), stored as JSON in `custom_records.data` keyed by field key; owner + same RLS as contacts. New permissions `objects.manage` (define objects, Owner only by default) and `records.edit` (Rep/Manager on by default, Viewer off). Custom objects appear in the sidebar. Pages tolerate the tables not existing yet.
+
 **All 10 v1 modules are built.** Possible next steps: README + git/GitHub, deploy to Vercel (set the 3 env vars there), real email sending, rate-limiting the public form, per-role permissions for pipelines/forms.
 
 ## Database

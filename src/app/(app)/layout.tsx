@@ -4,11 +4,12 @@ import { logout } from "@/app/login/actions";
 import { can } from "@/lib/permissions";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const { profile } = await requireProfile();
+  const { supabase, profile } = await requireProfile();
+  const { data: objects } = await supabase.from("custom_objects").select("slug, plural").order("created_at"); // empty until objects.sql has been run
   const initials = profile.full_name.slice(0, 2).toUpperCase();
   return (
     <>
-      <Sidebar hidden={[...(can(profile, "dashboard.view") ? [] : ["/dashboard", "/reports"]), ...(can(profile, "forms.manage") ? [] : ["/forms"])]} />
+      <Sidebar objects={objects ?? []} hidden={[...(can(profile, "dashboard.view") ? [] : ["/dashboard", "/reports"]), ...(can(profile, "forms.manage") ? [] : ["/forms"])]} />
       <div className="pl-56">
         <header className="sticky top-0 z-10 flex h-14 items-center justify-end gap-4 border-b border-slate-200 bg-white/90 px-8 backdrop-blur">
           <div className="flex items-center gap-3">
