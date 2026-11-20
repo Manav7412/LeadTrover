@@ -31,6 +31,8 @@ Keys live in `.env.local` only (git-ignored). Never commit it or print keys. `.e
 
 **Public demo login:** the login page has one button, **Guest** (`guest@leadtrove.demo`, role Viewer = sees everything, changes nothing; created by `npm run seed`). Its profile/password changes are blocked in `settings/actions.ts`. The Owner/Rep buttons were removed so strangers can't edit data; type their email/password by hand to use them.
 
+**Module 11 (extra): Calendar + Reports.** `/calendar` (month grid, `?m=YYYY-MM`; tasks, overdue in red, logged meetings; RLS limits Reps to their own) and `/reports` (needs `dashboard.view`: open leads with no owner / no next step / stale, plus a workload-by-person table for people who see all). Sidebar links added; no SQL changes.
+
 **All 10 v1 modules are built.** Possible next steps: README + git/GitHub, deploy to Vercel (set the 3 env vars there), real email sending, rate-limiting the public form, per-role permissions for pipelines/forms.
 
 ## Database
