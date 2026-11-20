@@ -1,13 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import Mascot from "./Mascot";
 
 // A look-and-feel placeholder for the AI assistant. It doesn't send anything yet.
 export default function AskBar({ firstName }: { firstName: string }) {
   const [text, setText] = useState("");
   const [note, setNote] = useState(false);
+  const [focused, setFocused] = useState(false);
   return (
-    <section className="mt-8 text-center">
+    <section className="mt-10 flex flex-col items-center gap-2 pt-12 sm:flex-row sm:items-end sm:gap-6">
+      <Mascot excited={focused || text.length > 0} />
+      <div className="min-w-0 flex-1 text-center sm:pb-2">
       <h2 className="text-2xl font-light tracking-tight text-slate-900 sm:text-3xl">What&apos;s on your mind, {firstName}?</h2>
       <form
         onSubmit={(e) => { e.preventDefault(); if (text.trim()) setNote(true); }}
@@ -18,6 +22,7 @@ export default function AskBar({ firstName }: { firstName: string }) {
         </button>
         <input
           value={text} onChange={(e) => { setText(e.target.value); setNote(false); }}
+          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
           placeholder={`Ask anything… with your personal AI Assistant, ${firstName}`} aria-label="Ask your personal AI Assistant"
           className="min-w-0 flex-1 bg-transparent px-1 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
         />
@@ -31,6 +36,7 @@ export default function AskBar({ firstName }: { firstName: string }) {
       <p className={`mt-3 text-sm ${note ? "text-accent" : "text-transparent"}`} aria-live="polite">
         The LeadTrove assistant is coming soon. This box isn&apos;t connected yet.
       </p>
+      </div>
     </section>
   );
 }
