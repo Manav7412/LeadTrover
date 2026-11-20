@@ -19,11 +19,20 @@ const MOOD_LINES: Record<Exclude<TrovieMood, "idle">, string> = {
 // Trovie is built from two layers (head and body) so the head can move on its own.
 // Measurements below are percentages of the picture, taken from the original artwork.
 const HEAD_PIVOT = "48% 45.9%";
+const SHOULDER_PIVOT = "82.9% 53.8%"; // where the waving arm turns
 
 export default function Trovie({ mood = "idle", widthClass = "w-40" }: { mood?: TrovieMood; widthClass?: string }) {
   const box = useRef<HTMLDivElement>(null);
   const [line, setLine] = useState(0);
   const [hop, setHop] = useState(true);
+  const [waveKey, setWaveKey] = useState(0); // changing the key restarts the wave
+  const lastWave = useRef(0);
+  const wave = () => {
+    const now = Date.now();
+    if (now - lastWave.current < 3200) return; // don't interrupt a wave in progress
+    lastWave.current = now;
+    setWaveKey((k) => k + 1);
+  };
 
   // Rotate friendly lines every few seconds while idle.
   useEffect(() => {
@@ -31,11 +40,16 @@ export default function Trovie({ mood = "idle", widthClass = "w-40" }: { mood?: 
     return () => clearInterval(id);
   }, []);
 
-  // A little hello hop when the page opens.
+  // A little hello hop and wave when the page opens, then a wave every half minute or so.
   useEffect(() => {
-    const id = setTimeout(() => setHop(false), 900);
-    return () => clearTimeout(id);
+    const stopHop = setTimeout(() => setHop(false), 900);
+    const hello = setTimeout(wave, 1100);
+    const again = setInterval(wave, 30000);
+    return () => { clearTimeout(stopHop); clearTimeout(hello); clearInterval(again); };
   }, []);
+
+  // Wave when someone starts typing their email.
+  useEffect(() => { if (mood === "typing") wave(); }, [mood]);
 
   // The head turns toward the mouse. We write CSS variables directly so nothing re-renders.
   useEffect(() => {
@@ -64,7 +78,7 @@ export default function Trovie({ mood = "idle", widthClass = "w-40" }: { mood?: 
   const eyesShut = mood === "private";
 
   return (
-    <div className="relative w-fit select-none" role="img" aria-label="Trovie, your LeadTrove AI assistant">
+    <div className="relative w-fit select-none" onPointerEnter={wave} role="img" aria-label="Trovie, your LeadTrove AI assistant">
       {/* speech bubble to the right of the head */}
       <p
         key={message}
@@ -91,6 +105,9 @@ export default function Trovie({ mood = "idle", widthClass = "w-40" }: { mood?: 
           <div className={`trovie-bob absolute inset-0 ${lively ? "is-lively" : ""}`}>
             {/* body (breathes, chest glows) */}
             <div className="trovie-breathe absolute inset-0">
+              <div key={waveKey} className={`absolute inset-0 ${waveKey ? "trovie-wave" : ""}`} style={{ transformOrigin: SHOULDER_PIVOT }}>
+                <Image src="/trovie-arm.png" alt="" width={407} height={760} unoptimized className="absolute inset-0 h-full w-full" />
+              </div>
               <Image src="/trovie-body.png" alt="" width={407} height={760} unoptimized className="absolute inset-0 h-full w-full" />
               <span className="trovie-pulse pointer-events-none absolute left-[47%] top-[59.2%] h-[13%] w-[25%] rounded-full" style={{ background: "radial-gradient(circle, rgba(103,232,249,0.9), rgba(34,211,238,0) 70%)" }} />
             </div>

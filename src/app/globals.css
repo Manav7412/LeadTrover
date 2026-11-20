@@ -93,3 +93,14 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .trovie-bob, .trovie-breathe, .trovie-sway, .trovie-blink, .trovie-pulse, .trovie-spin, .trovie-hop { animation: none; }
 }
+
+/* Trovie waves: the arm rotates up around the shoulder, waves, then lowers again */
+@keyframes trovie-wave {
+  0% { transform: rotate(0deg); }
+  14% { transform: rotate(-128deg); }
+  24%, 44%, 64% { transform: rotate(-158deg); }
+  34%, 54%, 74% { transform: rotate(-122deg); }
+  100% { transform: rotate(0deg); }
+}
+.trovie-wave { animation: trovie-wave 2.8s ease-in-out 1; }
+@media (prefers-reduced-motion: reduce) { .trovie-wave { animation: none; } }
