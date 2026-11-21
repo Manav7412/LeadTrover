@@ -12,7 +12,7 @@ const TIPS = [
 ];
 
 // The animated AI mascot. It floats, glows, follows the mouse a little, and gets excited when you type.
-export default function Mascot({ excited = false, widthClass = "w-44" }: { excited?: boolean; widthClass?: string }) {
+export default function Mascot({ excited = false, widthClass = "w-44", say }: { excited?: boolean; widthClass?: string; say?: string }) {
   const [tip, setTip] = useState(0);
   const [shift, setShift] = useState(0);
   const box = useRef<HTMLDivElement>(null);
@@ -34,7 +34,7 @@ export default function Mascot({ excited = false, widthClass = "w-44" }: { excit
     return () => window.removeEventListener("pointermove", move);
   }, []);
 
-  const message = excited ? "I'm listening…" : TIPS[tip];
+  const message = say ?? (excited ? "I'm listening…" : TIPS[tip]);
   return (
     <div ref={box} className={`mascot-hover relative mx-auto shrink-0 select-none sm:mx-0 ${widthClass}`} aria-hidden>
       <p key={message} className="mascot-bubble absolute -top-1 left-1/2 z-10 w-44 -translate-x-1/2 -translate-y-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-center text-xs leading-snug text-slate-600 shadow-sm">
