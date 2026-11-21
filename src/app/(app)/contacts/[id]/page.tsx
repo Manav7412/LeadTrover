@@ -10,6 +10,8 @@ import { can } from "@/lib/permissions";
 import { STATUS_STYLES, timeAgo } from "@/lib/contacts";
 import { getCustomFields } from "@/lib/custom-fields";
 import { showValue } from "@/lib/objects";
+import FileManager from "@/components/FileManager";
+import type { FileRow, FolderRow } from "@/lib/files";
 import { deleteContact } from "../actions";
 
 export default async function ContactPage({ params, searchParams }: PageProps<"/contacts/[id]">) {
@@ -23,7 +25,9 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
     .maybeSingle();
   if (!c) notFound();
 
-  const [{ data: acts }, { data: deals }] = await Promise.all([
+  const tab = sp.tab === "files" ? "files" : "timeline";
+  const folderParam = typeof sp.folder === "string" ? sp.folder : null;
+  const [{ data: acts }, { data: deals }, { data: folderRows }, { data: fileRows }] = await Promise.all([
     supabase
       .from("activities")
       .select("id, type, outcome, notes, next_step, created_at, profiles:user_id(full_name), deals(title)")
@@ -32,7 +36,14 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
       .overrideTypes<TimelineItem[], { merge: false }>(),
     supabase.from("deals").select("id, title, value, status, stages(name)").eq("contact_id", id)
       .overrideTypes<{ id: string; title: string; value: number; status: string; stages: { name: string } | null }[], { merge: false }>(),
+    // folders and files (empty until supabase/files.sql has been run)
+    supabase.from("contact_folders").select("id, contact_id, parent_id, name, created_at").eq("contact_id", id),
+    supabase.from("contact_files").select("id, contact_id, folder_id, name, size, mime_type, created_at, profiles:uploaded_by(full_name)").eq("contact_id", id)
+      .overrideTypes<FileRow[], { merge: false }>(),
   ]);
+  const folders = (folderRows ?? []) as FolderRow[];
+  const files = fileRows ?? [];
+  const folderId = folders.some((f) => f.id === folderParam) ? folderParam : null;
   const customFields = await getCustomFields(supabase, "contacts");
   const activities = acts ?? [];
   const nextStep = activities.find((a) => a.next_step)?.next_step ?? null;
@@ -113,12 +124,29 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
               {nextStep ? <><b>Next step:</b> {nextStep}</> : <><b>No next step set.</b> Log an activity below and say what happens next.</>}
             </div>
           )}
-          {can(profile, "activities.log") && <ActivityForm contactId={id} defaultFollowUp={dateInput(1)} deals={(deals ?? []).map((d) => ({ id: d.id, title: d.title }))} />}
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-900">Timeline</h2>
-            {can(profile, "contacts.export") && <a href={`/export/timeline?contact=${id}`} className="text-xs font-medium text-accent hover:underline" download>Export timeline CSV</a>}
+          <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1">
+            {([["timeline", "Timeline", activities.length], ["files", "Files", files.length]] as const).map(([key, label, n]) => (
+              <Link
+                key={key} href={key === "files" ? `/contacts/${id}?tab=files` : `/contacts/${id}`}
+                className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium ${tab === key ? "bg-accent text-white" : "text-slate-600 hover:bg-slate-50"}`}
+              >
+                {label}
+                <span className={`rounded-full px-1.5 text-xs ${tab === key ? "bg-white/25 text-white" : "bg-slate-100 text-slate-600"}`}>{n}</span>
+              </Link>
+            ))}
           </div>
-          <ActivityTimeline items={activities} contactId={id} canDelete={can(profile, "activities.log")} />
+          {tab === "files" ? (
+            <FileManager contactId={id} folderId={folderId} folders={folders} files={files} canEdit={can(profile, "files.manage")} />
+          ) : (
+            <>
+              {can(profile, "activities.log") && <ActivityForm contactId={id} defaultFollowUp={dateInput(1)} deals={(deals ?? []).map((d) => ({ id: d.id, title: d.title }))} />}
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-slate-900">Timeline</h2>
+                {can(profile, "contacts.export") && <a href={`/export/timeline?contact=${id}`} className="text-xs font-medium text-accent hover:underline" download>Export timeline CSV</a>}
+              </div>
+              <ActivityTimeline items={activities} contactId={id} canDelete={can(profile, "activities.log")} />
+            </>
+          )}
         </div>
       </div>
     </div>

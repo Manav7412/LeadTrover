@@ -37,6 +37,8 @@ Keys live in `.env.local` only (git-ignored). Never commit it or print keys. `.e
 
 **Custom fields on standard objects:** run `supabase/custom-fields.sql` (after `objects.sql`). In Settings > Objects click Contacts or Deals (`/settings/objects/standard/[name]`) to add fields like Address or Postal Code. They are rows in `custom_fields` with `standard_object` set, values live in the row's `custom` jsonb column, shared helpers in `src/lib/custom-fields.ts` + `src/components/CustomFieldInputs.tsx`; shown on the contact form/page and the deal form. Not yet in CSV import/export or the lead form.
 
+**Module 13 (extra): Files on contacts.** Run `supabase/files.sql` (after `permissions.sql`): private storage bucket `contact-files` (25 MB/file), tables `contact_folders` (nested, per contact) and `contact_files`, RLS (read = can see the contact; write = new permission `files.manage` + can edit the contact) and storage policies keyed on the first path segment (the contact id). Contact page `/contacts/[id]?tab=files[&folder=<id>]` shows the `FileManager` component (breadcrumbs, new folder, drag-and-drop/multi upload, rename, move, delete, download). Uploads go browser → storage with a one-time signed upload URL (`prepareUpload` → upload → `confirmUpload` in `contacts/[id]/file-actions.ts`), downloads via `GET /files/[id]` (`?download=1`), which redirects to a 60-second signed URL. Rules/helpers in `src/lib/files.ts` (blocked extensions, depth limit 6). Deleting a contact removes its stored files.
+
 **All 10 v1 modules are built.** Possible next steps: README + git/GitHub, deploy to Vercel (set the 3 env vars there), real email sending, rate-limiting the public form, per-role permissions for pipelines/forms.
 
 ## Database

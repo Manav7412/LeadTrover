@@ -94,6 +94,9 @@ export async function updateContact(id: string, _prev: FormState, formData: Form
 export async function deleteContact(id: string) {
   const { supabase, profile } = await requireProfile();
   if (!can(profile, "contacts.delete")) return;
+  // remove the contact's attached files from storage first (the database rows go with the contact)
+  const { data: attached } = await supabase.from("contact_files").select("storage_path").eq("contact_id", id);
+  if (attached?.length) await supabase.storage.from("contact-files").remove(attached.map((f) => f.storage_path as string));
   await supabase.from("contacts").delete().eq("id", id);
   revalidatePath("/contacts");
   redirect("/contacts");

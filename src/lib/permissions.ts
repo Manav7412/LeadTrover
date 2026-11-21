@@ -13,6 +13,7 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       { key: "contacts.delete", label: "Delete contacts", hint: "Permanently remove contacts" },
       { key: "contacts.import", label: "Import contacts", hint: "Upload CSV files" },
       { key: "contacts.export", label: "Export data", hint: "Download contacts, tasks and deals as CSV" },
+      { key: "files.manage", label: "Manage files", hint: "Upload, organise and delete files and folders on contacts" },
     ],
   },
   {
