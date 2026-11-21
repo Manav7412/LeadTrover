@@ -1,7 +1,6 @@
 // What Trovie can look up. Every tool runs as the signed-in person (row-level security), so Trovie can only
 // ever see what that person can see. All tools are READ-ONLY: Trovie cannot change anything yet.
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type Anthropic from "@anthropic-ai/sdk";
 import { applyContactFilters } from "@/lib/contact-filters";
 import { dateInputFrom, formatDue, startOfToday } from "@/lib/dates";
 
@@ -13,12 +12,13 @@ const str = (v: unknown, max = 80) => (typeof v === "string" ? v.trim().slice(0,
 const daysSince = (iso: string | null, now: number) => (iso ? Math.floor((now - new Date(iso).getTime()) / DAY) : null);
 const nameOf = (c: { first_name: string; last_name: string } | null | undefined) => (c ? `${c.first_name} ${c.last_name}`.trim() : null);
 
-export const TROVIE_TOOLS: Anthropic.Beta.BetaTool[] = [
+export type ToolDef = { name: string; description: string; input_schema: Record<string, unknown> };
+
+export const TROVIE_TOOLS: ToolDef[] = [
   {
     name: "get_overview",
     description: "Headline numbers for the CRM: open leads, stale leads, leads with no next step, tasks due today, overdue tasks, open pipeline value, and deals won in the last 30 days. Use it for general 'how am I doing' questions.",
     input_schema: { type: "object", properties: {}, additionalProperties: false },
-    strict: true,
   },
   {
     name: "list_tasks",
@@ -28,13 +28,11 @@ export const TROVIE_TOOLS: Anthropic.Beta.BetaTool[] = [
       properties: { filter: { type: "string", enum: ["today", "overdue", "upcoming"] }, limit: { type: "integer", description: "1 to 25, default 10" } },
       required: ["filter"], additionalProperties: false,
     },
-    strict: true,
   },
   {
     name: "list_stale_leads",
     description: "Leads that have had no activity for 7+ days (flagged stale), quietest first.",
     input_schema: { type: "object", properties: { limit: { type: "integer", description: "1 to 25, default 10" } }, additionalProperties: false },
-    strict: true,
   },
   {
     name: "search_contacts",
@@ -49,7 +47,6 @@ export const TROVIE_TOOLS: Anthropic.Beta.BetaTool[] = [
       },
       additionalProperties: false,
     },
-    strict: true,
   },
   {
     name: "get_contact",
@@ -59,7 +56,6 @@ export const TROVIE_TOOLS: Anthropic.Beta.BetaTool[] = [
       properties: { contact_id: { type: "string" }, name: { type: "string", description: "Full or partial name or email" } },
       additionalProperties: false,
     },
-    strict: true,
   },
   {
     name: "list_deals",
@@ -73,13 +69,11 @@ export const TROVIE_TOOLS: Anthropic.Beta.BetaTool[] = [
       },
       additionalProperties: false,
     },
-    strict: true,
   },
   {
     name: "pipeline_summary",
     description: "For each pipeline: the number and total value of open deals in every stage, plus deals won and lost in the last 30 days.",
     input_schema: { type: "object", properties: {}, additionalProperties: false },
-    strict: true,
   },
 ];
 
