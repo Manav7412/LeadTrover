@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient as createBrowserClient } from "@supabase/supabase-js";
-import { FILES_BUCKET, MAX_FILES_PER_UPLOAD, fileKind, folderPathLabel, folderSubtree, formatBytes, type FileRow, type FolderRow } from "@/lib/files";
+import { FILES_BUCKET, MAX_FILES_PER_UPLOAD, extensionOf, fileKind, folderPathLabel, folderSubtree, formatBytes, type FileRow, type FolderRow } from "@/lib/files";
 import {
   confirmUpload, createFolder, deleteFile, deleteFolder, moveFile, moveFolder, prepareUpload, renameFile, renameFolder,
 } from "@/app/(app)/contacts/[id]/file-actions";
@@ -15,6 +15,74 @@ type Editing = { kind: "folder" | "file"; id: string; mode: "rename" | "move" } 
 
 const dateLabel = (iso: string) => new Date(iso).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
 
+type PreviewKind = "image" | "pdf" | "video" | "audio" | "text" | null;
+function previewKind(name: string, mime: string | null): PreviewKind {
+  const ext = extensionOf(name); const m = mime ?? "";
+  if (m.startsWith("image/") || ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp"].includes(ext)) return "image";
+  if (m === "application/pdf" || ext === "pdf") return "pdf";
+  if (m.startsWith("video/") || ["mp4", "webm", "mov"].includes(ext)) return "video";
+  if (m.startsWith("audio/") || ["mp3", "wav", "m4a", "ogg"].includes(ext)) return "audio";
+  if (m.startsWith("text/") || ["txt", "csv", "md", "json", "log"].includes(ext)) return "text";
+  return null;
+}
+
+// The preview window: shows the file on top of the contact page, so nothing downloads and no new tab opens.
+function Preview({ files, index, onClose, onGo }: { files: FileRow[]; index: number; onClose: () => void; onGo: (i: number) => void }) {
+  const file = files[index];
+  const kind = previewKind(file.name, file.mime_type);
+  const src = `/files/${file.id}`;
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      else if (e.key === "ArrowLeft" && index > 0) onGo(index - 1);
+      else if (e.key === "ArrowRight" && index < files.length - 1) onGo(index + 1);
+    };
+    window.addEventListener("keydown", onKey);
+    const overflow = document.body.style.overflow; document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = overflow; };
+  }, [index, files.length, onClose, onGo]);
+
+  const nav = "flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent";
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-[2px]" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }} role="dialog" aria-modal="true" aria-label={`Preview of ${file.name}`}>
+      <div className="flex h-[82vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3">
+          <button className={nav} disabled={index === 0} onClick={() => onGo(index - 1)} aria-label="Previous file">‹</button>
+          <button className={nav} disabled={index === files.length - 1} onClick={() => onGo(index + 1)} aria-label="Next file">›</button>
+          <div className="min-w-0 flex-1 px-1">
+            <p className="truncate text-sm font-semibold text-slate-900">{file.name}</p>
+            <p className="text-xs text-slate-500">{formatBytes(file.size)} · {index + 1} of {files.length}</p>
+          </div>
+          <a href={`${src}?download=1`} className="btn-secondary !py-1.5 text-xs">Download</a>
+          <a href={src} target="_blank" rel="noreferrer" className="btn-secondary !py-1.5 text-xs">Open in new tab</a>
+          <button className={nav} onClick={onClose} aria-label="Close preview">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </button>
+        </div>
+        <div className="relative flex-1 bg-slate-100">
+          {kind && !loaded && <p className="absolute inset-0 flex items-center justify-center text-sm text-slate-400">Loading…</p>}
+          {kind === "image" && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={file.id} src={src} alt={file.name} onLoad={() => setLoaded(true)} className="absolute inset-0 h-full w-full object-contain p-4" />
+          )}
+          {(kind === "pdf" || kind === "text") && <iframe key={file.id} src={src} title={file.name} onLoad={() => setLoaded(true)} className="absolute inset-0 h-full w-full bg-white" />}
+          {kind === "video" && <video key={file.id} src={src} controls onLoadedData={() => setLoaded(true)} className="absolute inset-0 h-full w-full bg-black" />}
+          {kind === "audio" && <div className="absolute inset-0 flex items-center justify-center p-8"><audio key={file.id} src={src} controls onLoadedData={() => setLoaded(true)} className="w-full max-w-md" /></div>}
+          {!kind && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8 text-center">
+              <span className={`flex h-14 w-16 items-center justify-center rounded-xl text-sm font-bold ${fileKind(file.name, file.mime_type).style}`}>{fileKind(file.name, file.mime_type).label}</span>
+              <p className="text-sm font-medium text-slate-700">This type of file can&apos;t be previewed here.</p>
+              <p className="text-sm text-slate-500">Word, Excel and PowerPoint files need to be downloaded to open them.</p>
+              <a href={`${src}?download=1`} className="btn-primary">Download {file.name.length > 30 ? "file" : file.name}</a>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function FileManager({ contactId, folderId, folders, files, canEdit }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -23,6 +91,7 @@ export default function FileManager({ contactId, folderId, folders, files, canEd
   const [dragging, setDragging] = useState(false);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Editing>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
   const picker = useRef<HTMLInputElement>(null);
   const counter = useRef(0);
 
@@ -197,10 +266,10 @@ export default function FileManager({ contactId, folderId, folders, files, canEd
                 <tr key={f.id} className="hover:bg-slate-50">
                   <td className="px-5 py-2.5">
                     {isEditing ? <EditRow kind="file" id={f.id} current={f.name} parent={f.folder_id} /> : (
-                      <a href={`/files/${f.id}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 text-slate-900 hover:text-accent">
+                      <button onClick={() => setPreviewId(f.id)} className="flex max-w-full items-center gap-3 text-left text-slate-900 hover:text-accent" title="Preview">
                         <span className={`flex h-7 w-9 shrink-0 items-center justify-center rounded-md text-[10px] font-bold ${kind.style}`}>{kind.label}</span>
                         <span className="min-w-0 truncate">{f.name}</span>
-                      </a>
+                      </button>
                     )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-slate-500">{formatBytes(f.size)}</td>
@@ -208,6 +277,7 @@ export default function FileManager({ contactId, folderId, folders, files, canEd
                   <td className="px-5 py-2.5">
                     {!isEditing && (
                       <div className="flex justify-end gap-3">
+                        <button className={btn} onClick={() => setPreviewId(f.id)}>Preview</button>
                         <a href={`/files/${f.id}?download=1`} className={btn}>Download</a>
                         {canEdit && <button className={btn} onClick={() => setEditing({ kind: "file", id: f.id, mode: "rename" })}>Rename</button>}
                         {canEdit && <button className={btn} onClick={() => setEditing({ kind: "file", id: f.id, mode: "move" })}>Move</button>}
@@ -220,6 +290,9 @@ export default function FileManager({ contactId, folderId, folders, files, canEd
             })}
           </tbody>
         </table>
+      )}
+      {previewId && inHere.some((f) => f.id === previewId) && (
+        <Preview key={previewId} files={inHere} index={inHere.findIndex((f) => f.id === previewId)} onClose={() => setPreviewId(null)} onGo={(i) => setPreviewId(inHere[i].id)} />
       )}
     </div>
   );
