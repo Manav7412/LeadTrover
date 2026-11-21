@@ -9,12 +9,12 @@ import { GUEST_EMAIL, MAX_QUESTION_CHARS, takeAllowance } from "@/lib/trovie/lim
 // The AI key stays on the server, every lookup runs as the signed-in person, and each person has a daily allowance.
 export const maxDuration = 60;
 
-// Gemini's free tier. Change the model with TROVIE_MODEL (e.g. gemini-2.5-flash-lite is lighter, gemini-2.5-pro is smarter but not free).
-const MODEL = process.env.TROVIE_MODEL || "gemini-2.5-flash";
+// Gemini's free tier. Change the model with TROVIE_MODEL (e.g. gemini-3.5-flash is smarter but slower and often busy on the free plan).
+const MODEL = process.env.TROVIE_MODEL || "gemini-3.5-flash-lite";
 const MAX_TURNS = 6;
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models";
 
-type Part = { text?: string; thought?: boolean; functionCall?: { name: string; args?: Record<string, unknown> }; functionResponse?: unknown; [k: string]: unknown };
+type Part = { text?: string; thought?: boolean; functionCall?: { id?: string; name: string; args?: Record<string, unknown> }; functionResponse?: unknown; [k: string]: unknown };
 type Content = { role: "user" | "model"; parts: Part[] };
 
 // Gemini wants a simpler schema than Claude: no "additionalProperties", and no empty "properties".
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
         let sentText = false;
 
         for (let turn = 0; turn < MAX_TURNS; turn++) {
-          const res = await fetch(`${GEMINI}/${encodeURIComponent(MODEL)}:streamGenerateContent?alt=sse`, {
+          const callGemini = () => fetch(`${GEMINI}/${encodeURIComponent(MODEL)}:streamGenerateContent?alt=sse`, {
             method: "POST",
             headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
             body: JSON.stringify({
@@ -96,6 +96,9 @@ export async function POST(request: Request) {
               generationConfig: { maxOutputTokens: 8000, temperature: 0.4 },
             }),
           });
+          let res = await callGemini();
+          // Google's free servers are sometimes busy: wait a moment and try once more
+          if (res.status === 503 || res.status === 429) { await new Promise((r) => setTimeout(r, 2000)); res = await callGemini(); }
           if (!res.ok || !res.body) throw new GeminiError(res.status, (await res.text().catch(() => "")).slice(0, 400));
 
           // read the streamed answer: text goes straight to the browser, function calls are collected
@@ -148,7 +151,7 @@ export async function POST(request: Request) {
             const fc = p.functionCall!;
             send({ t: "status", text: TOOL_STATUS[fc.name] ?? "Looking that up…" });
             const out = await runTool(fc.name, fc.args ?? {}, { supabase: db, userId: profile.id, scopeAll: seesAll(profile) });
-            answers.push({ functionResponse: { name: fc.name, response: out.isError ? { error: out.text } : { result: out.text } } });
+            answers.push({ functionResponse: { ...(fc.id ? { id: fc.id } : {}), name: fc.name, response: out.isError ? { error: out.text } : { result: out.text } } });
           }
           convo.push({ role: "user", parts: answers });
         }
