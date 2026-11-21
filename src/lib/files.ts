@@ -12,7 +12,7 @@ export const BLOCKED_EXTENSIONS = ["exe", "bat", "cmd", "com", "msi", "scr", "sh
 export type FolderRow = { id: string; contact_id: string; parent_id: string | null; name: string; created_at: string };
 export type FileRow = {
   id: string; contact_id: string; folder_id: string | null; name: string; size: number; mime_type: string | null;
-  created_at: string; profiles: { full_name: string } | null;
+  created_at: string; tags: string[]; profiles: { full_name: string } | null;
 };
 
 export const extensionOf = (name: string) => (name.includes(".") ? name.split(".").pop()!.toLowerCase() : "");
@@ -58,4 +58,16 @@ export function folderDepth(folders: FolderRow[], id: string | null): number {
   let depth = 0; let cur = id ? folders.find((f) => f.id === id) : undefined;
   while (cur && depth < 50) { depth++; cur = cur.parent_id ? folders.find((f) => f.id === cur!.parent_id) : undefined; }
   return depth;
+}
+
+export const TAG_SUGGESTIONS = ["Contract", "Proposal", "Quote", "Invoice", "Receipt", "ID", "Brief", "Other"];
+export const MAX_TAGS_PER_FILE = 8;
+export const MAX_TAG_LENGTH = 24;
+export const MAX_ZIP_BYTES = 300 * 1024 * 1024; // the ZIP is built in the browser, so keep it to a sensible size
+
+// "a, b ,A" -> ["a", "b"] (trimmed, no repeats ignoring capitals)
+export function parseTags(raw: string): string[] {
+  const out: string[] = [];
+  for (const t of raw.split(",")) { const v = t.trim().slice(0, MAX_TAG_LENGTH); if (v && !out.some((x) => x.toLowerCase() === v.toLowerCase())) out.push(v); }
+  return out.slice(0, MAX_TAGS_PER_FILE);
 }

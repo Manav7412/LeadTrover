@@ -38,11 +38,17 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
       .overrideTypes<{ id: string; title: string; value: number; status: string; stages: { name: string } | null }[], { merge: false }>(),
     // folders and files (empty until supabase/files.sql has been run)
     supabase.from("contact_folders").select("id, contact_id, parent_id, name, created_at").eq("contact_id", id),
-    supabase.from("contact_files").select("id, contact_id, folder_id, name, size, mime_type, created_at, profiles:uploaded_by(full_name)").eq("contact_id", id)
+    supabase.from("contact_files").select("id, contact_id, folder_id, name, size, mime_type, created_at, tags, profiles:uploaded_by(full_name)").eq("contact_id", id)
       .overrideTypes<FileRow[], { merge: false }>(),
   ]);
   const folders = (folderRows ?? []) as FolderRow[];
-  const files = fileRows ?? [];
+  let files = fileRows ?? [];
+  if (fileRows === null) {
+    // the tags column doesn't exist until the file-tags SQL has been run: fall back to the plain list
+    const { data: plain } = await supabase.from("contact_files").select("id, contact_id, folder_id, name, size, mime_type, created_at, profiles:uploaded_by(full_name)").eq("contact_id", id)
+      .overrideTypes<Omit<FileRow, "tags">[], { merge: false }>();
+    files = (plain ?? []).map((f) => ({ ...f, tags: [] }));
+  }
   const folderId = folders.some((f) => f.id === folderParam) ? folderParam : null;
   const customFields = await getCustomFields(supabase, "contacts");
   const activities = acts ?? [];
@@ -136,7 +142,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
             ))}
           </div>
           {tab === "files" ? (
-            <FileManager contactId={id} folderId={folderId} folders={folders} files={files} canEdit={can(profile, "files.manage")} />
+            <FileManager contactId={id} zipName={`${c.first_name} ${c.last_name}`.trim()} folderId={folderId} folders={folders} files={files} canEdit={can(profile, "files.manage")} />
           ) : (
             <>
               {can(profile, "activities.log") && <ActivityForm contactId={id} defaultFollowUp={dateInput(1)} deals={(deals ?? []).map((d) => ({ id: d.id, title: d.title }))} />}

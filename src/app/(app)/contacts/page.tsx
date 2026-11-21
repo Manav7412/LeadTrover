@@ -55,6 +55,12 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
       .order("created_at", { ascending: false });
     for (const a of acts ?? []) if (!nextSteps.has(a.contact_id)) nextSteps.set(a.contact_id, a.next_step);
   }
+  // how many files are attached to each contact shown (empty until supabase/files.sql has been run)
+  const fileCounts = new Map<string, number>();
+  if (contacts.length > 0) {
+    const { data: attached } = await supabase.from("contact_files").select("contact_id").in("contact_id", contacts.map((c) => c.id));
+    for (const f of attached ?? []) fileCounts.set(f.contact_id as string, (fileCounts.get(f.contact_id as string) ?? 0) + 1);
+  }
   const allTags = [...new Set((tagSource ?? []).flatMap((r) => r.tags as string[]))].sort();
   const filtered = Boolean(q || status || tag || owner || staleOnly);
 
@@ -134,6 +140,12 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
                           {(c.first_name[0] ?? "") + (c.last_name[0] ?? "")}
                         </span>
                         <Link href={`/contacts/${c.id}`} className="font-medium text-slate-900 hover:text-accent">{c.first_name} {c.last_name}</Link>
+                        {(fileCounts.get(c.id) ?? 0) > 0 && (
+                          <Link href={`/contacts/${c.id}?tab=files`} title={`${fileCounts.get(c.id)} attached ${fileCounts.get(c.id) === 1 ? "file" : "files"}`} className="flex items-center gap-1 text-xs text-slate-400 hover:text-accent">
+                            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11l-8.5 8.5a5 5 0 0 1-7-7L14 4a3.3 3.3 0 0 1 4.7 4.7l-8.6 8.5a1.7 1.7 0 0 1-2.4-2.4L15 7" /></svg>
+                            {fileCounts.get(c.id)}
+                          </Link>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-slate-700">{c.companies?.name ?? "—"}</td>

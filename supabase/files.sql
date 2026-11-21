@@ -86,3 +86,6 @@ update roles set permissions = permissions || '{"files.manage":true}'::jsonb
   where name in ('Rep', 'Manager') and not (permissions ? 'files.manage');
 update roles set permissions = permissions || '{"files.manage":false}'::jsonb
   where name = 'Viewer' and not (permissions ? 'files.manage');
+
+-- 6) Tags on files (added later): run this part if you ran the file above before.
+alter table contact_files add column if not exists tags text[] not null default '{}';

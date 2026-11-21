@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireProfile } from "@/lib/auth";
 import { DENIED, can } from "@/lib/permissions";
 import {
-  BLOCKED_EXTENSIONS, FILES_BUCKET, MAX_FILE_BYTES, MAX_FOLDER_DEPTH, MAX_NAME_LENGTH, extensionOf, folderDepth, folderSubtree, safeStorageName,
+  BLOCKED_EXTENSIONS, FILES_BUCKET, MAX_FILE_BYTES, MAX_FOLDER_DEPTH, MAX_NAME_LENGTH, extensionOf, folderDepth, folderSubtree, parseTags, safeStorageName,
   type FolderRow,
 } from "@/lib/files";
 
@@ -162,5 +162,60 @@ export async function confirmUpload(contactId: string, folderId: string | null, 
     await c.supabase.storage.from(FILES_BUCKET).remove([file.path]);
     return { error: error.message };
   }
+  refresh(contactId); return {};
+}
+
+// ---------- Tags, and working on several items at once ----------
+
+export async function setFileTags(contactId: string, fileId: string, rawTags: string): Promise<Result> {
+  const c = await ctx(); if ("error" in c) return { error: c.error };
+  const { error } = await c.supabase.from("contact_files").update({ tags: parseTags(rawTags) }).eq("id", fileId).eq("contact_id", contactId);
+  if (error) return { error: error.message.includes("tags") ? "Run the new SQL for file tags in Supabase first." : error.message };
+  refresh(contactId); return {};
+}
+
+type Picked = { fileIds: string[]; folderIds: string[] };
+
+export async function moveItems(contactId: string, picked: Picked, destId: string | null): Promise<Result> {
+  const c = await ctx(); if ("error" in c) return { error: c.error };
+  const folders = await loadFolders(c.supabase, contactId);
+  if (destId && !folders.some((f) => f.id === destId)) return { error: "That destination no longer exists." };
+  // check every folder first so nothing is half-moved
+  const movingFolders = picked.folderIds.map((id) => folders.find((f) => f.id === id)).filter((f): f is FolderRow => Boolean(f));
+  for (const f of movingFolders) {
+    if (f.parent_id === destId) continue;
+    const subtree = folderSubtree(folders, f.id);
+    if (destId && subtree.includes(destId)) return { error: `"${f.name}" can't be moved into itself.` };
+    const deepest = Math.max(...subtree.map((id) => folderDepth(folders, id) - folderDepth(folders, f.id) + 1));
+    if (folderDepth(folders, destId) + deepest > MAX_FOLDER_DEPTH) return { error: `Moving "${f.name}" would nest folders more than ${MAX_FOLDER_DEPTH} levels deep.` };
+    if (folders.some((x) => x.id !== f.id && x.parent_id === destId && x.name.toLowerCase() === f.name.toLowerCase())) return { error: `A folder named "${f.name}" already exists there.` };
+  }
+  for (const f of movingFolders) if (f.parent_id !== destId) {
+    const { error } = await c.supabase.from("contact_folders").update({ parent_id: destId }).eq("id", f.id).eq("contact_id", contactId);
+    if (error) return { error: error.message };
+  }
+  if (picked.fileIds.length) {
+    const { error } = await c.supabase.from("contact_files").update({ folder_id: destId }).in("id", picked.fileIds).eq("contact_id", contactId);
+    if (error) return { error: error.message };
+  }
+  refresh(contactId); return {};
+}
+
+export async function deleteItems(contactId: string, picked: Picked): Promise<Result> {
+  const c = await ctx(); if ("error" in c) return { error: c.error };
+  const folders = await loadFolders(c.supabase, contactId);
+  const folderIds = [...new Set(picked.folderIds.filter((id) => folders.some((f) => f.id === id)).flatMap((id) => folderSubtree(folders, id)))];
+  const fileQuery = c.supabase.from("contact_files").select("id, storage_path").eq("contact_id", contactId);
+  const { data: inFolders } = folderIds.length ? await fileQuery.in("folder_id", folderIds) : { data: [] as { id: string; storage_path: string }[] };
+  const { data: direct } = picked.fileIds.length
+    ? await c.supabase.from("contact_files").select("id, storage_path").eq("contact_id", contactId).in("id", picked.fileIds)
+    : { data: [] as { id: string; storage_path: string }[] };
+  const paths = [...new Set([...(inFolders ?? []), ...(direct ?? [])].map((f) => f.storage_path as string))];
+  for (let i = 0; i < paths.length; i += 100) {
+    const { error } = await c.supabase.storage.from(FILES_BUCKET).remove(paths.slice(i, i + 100));
+    if (error) return { error: error.message };
+  }
+  if (picked.fileIds.length) await c.supabase.from("contact_files").delete().eq("contact_id", contactId).in("id", picked.fileIds);
+  for (const id of picked.folderIds) if (folders.some((f) => f.id === id)) await c.supabase.from("contact_folders").delete().eq("id", id).eq("contact_id", contactId);
   refresh(contactId); return {};
 }
